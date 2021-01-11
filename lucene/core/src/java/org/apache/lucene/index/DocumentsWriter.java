@@ -413,13 +413,14 @@ final class DocumentsWriter implements Closeable, Accountable {
     return hasEvents;
   }
 
+  // 线程安全
   long updateDocuments(
       final Iterable<? extends Iterable<? extends IndexableField>> docs,
       final DocumentsWriterDeleteQueue.Node<?> delNode)
       throws IOException {
     boolean hasEvents = preUpdate();
 
-    final DocumentsWriterPerThread dwpt = flushControl.obtainAndLock();
+    final DocumentsWriterPerThread dwpt = flushControl.obtainAndLock(); // 试图获取lock，实际上通过DocumentsWriterPerThreadPool.getAndLock()来获取锁
     final DocumentsWriterPerThread flushingDWPT;
     long seqNo;
 
