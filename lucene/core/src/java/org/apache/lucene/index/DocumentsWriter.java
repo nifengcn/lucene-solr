@@ -149,13 +149,29 @@ final class DocumentsWriter implements Closeable, Accountable {
     return applyDeleteOrUpdate(q -> q.addDocValuesUpdates(updates));
   }
 
+/*
+  @FunctionalInterface 函数式接口
+  public interface ToLongFunction<T> {
+
+    //
+    // Applies this function to the given argument.
+
+    // @param value the function argument
+    // @return the function result
+
+    long applyAsLong(T value);
+  }
+  函数式接口可以被隐式转换为lambda表达式。
+  可以用lambda表达式来表示该接口的一个实现。
+  调用方式：applyDeleteOrUpdate(q -> q.addDelete(terms));
+  */
   private synchronized long applyDeleteOrUpdate(ToLongFunction<DocumentsWriterDeleteQueue> function)
       throws IOException {
     // This method is synchronized to make sure we don't replace the deleteQueue while applying this
     // update / delete
     // otherwise we might lose an update / delete if this happens concurrently to a full flush.
     final DocumentsWriterDeleteQueue deleteQueue = this.deleteQueue;
-    long seqNo = function.applyAsLong(deleteQueue);
+    long seqNo = function.applyAsLong(deleteQueue); //即 deleteQueue.addDelete(terms)
     flushControl.doOnDelete();
     if (applyAllDeletes()) {
       seqNo = -seqNo;
@@ -420,7 +436,7 @@ final class DocumentsWriter implements Closeable, Accountable {
       throws IOException {
     boolean hasEvents = preUpdate();
 
-    final DocumentsWriterPerThread dwpt = flushControl.obtainAndLock(); // 试图获取lock，实际上通过DocumentsWriterPerThreadPool.getAndLock()来获取锁
+    final DocumentsWriterPerThread dwpt = flushControl.obtainAndLock(); // 通过flushControl.perThreadPool.getAndLock()来获取dwpt,并加锁
     final DocumentsWriterPerThread flushingDWPT;
     long seqNo;
 
